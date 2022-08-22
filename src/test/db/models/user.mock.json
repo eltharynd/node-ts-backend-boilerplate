@@ -1,0 +1,17 @@
+[
+  {
+    "_id": "62fca0f3e9e1c4a7b2f14ec0",
+    "email": "laurent@email.com",
+    "password": "asupersecretpassword"
+  },
+  {
+    "_id": "62fca0f3e9e1c4a7b2f14ec1",
+    "email": "joel@email.com",
+    "password": "asupersecretpassword"
+  },
+  {
+    "_id": "62fca0f3e9e1c4a7b2f14ec2",
+    "email": "daniel@email.com",
+    "password": "asupersecretpassword"
+  }
+]
