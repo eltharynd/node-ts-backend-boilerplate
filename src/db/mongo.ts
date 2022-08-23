@@ -1,7 +1,6 @@
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import * as Mongoose from 'mongoose'
 import environment from '../environment'
-import { Organizations } from './models/organizations.model'
 import { Users } from './models/users.model'
 
 export class Mongo {
@@ -56,14 +55,9 @@ export class Mongo {
 
   private static async populateMockData() {
     let users = require('../test/db/models/user.mock.json')
-    let organizations = require('../test/db/models/organizations.mock.json')
     for (let user of users) {
       let u = await Users.create(user)
       await u.save()
-    }
-    for (let org of organizations) {
-      let o = await Organizations.create(org)
-      await o.save()
     }
   }
 }

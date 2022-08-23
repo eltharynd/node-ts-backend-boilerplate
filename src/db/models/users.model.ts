@@ -1,5 +1,6 @@
 import { Schema, model, Types } from 'mongoose'
 import * as bcrypt from 'bcrypt'
+import { Sessions } from './sessions.model'
 
 export interface IUser {
   _id: Types.ObjectId
@@ -16,10 +17,7 @@ export interface IUser {
   clean(): ICleanedUser
 
   /**
-   * Checks if user is owner/member in one or more organizations before deleting it.
-   *
-   * @remarks If they own one or more organizations it throws an exception instead of deleting.
-   * @remarks If they are members of one or more organizations it removes them from those before deleting.
+   * Checks if user is a user is safe to delete before doing so.
    *
    * @returns A Promise<Types.ObjectId> with the _id of the deleted user, otherwise an error
    **/
@@ -87,6 +85,10 @@ const safeDelete = async function (): Promise<Types.ObjectId> {
     if (forbidden) return reject(`Can't delete user`)
     else {
       //update all relevant models
+      let sessions = await Sessions.find({ user: this._id })
+      for (let s of sessions) {
+        await s.delete()
+      }
     }
 
     this.overridePermissions = true
