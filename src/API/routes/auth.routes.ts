@@ -1,62 +1,76 @@
 import { Express, Router } from 'express'
+import { Authpal } from 'authpal'
+
 import {
   CONFLICT,
   CREATED,
   INTERNAL_SERVER_ERROR,
   requestBodyGuard,
   sendDefaultMessage,
-  UNAUTHORIZED,
 } from '../../messages/defaults'
 import { Routes } from '../classes/routes'
 
-import * as passport from 'passport'
-import { Strategy as LocalStrategy } from 'passport-local'
-import { Strategy as JWTStrategy, ExtractJwt } from 'passport-jwt'
-import * as JWT from 'jsonwebtoken'
 import environment from '../../environment'
 import { Users } from '../../db/models/users.model'
-import capitalize = require('capitalize')
+import { Sessions } from '../../db/models/sessions.model'
+
+import { Mongo } from '../../db/mongo'
 
 export class AuthRoutes extends Routes {
+  static authpal: Authpal
+  static authGuard
+
   constructor(prefix, app) {
-    passport.use(
-      'login',
-      new LocalStrategy(
-        {
-          usernameField: 'email',
-          passwordField: 'password',
-        },
-        async (email, password, done) => {
-          try {
-            let user = await Users.findOne({ email })
-            if (!user) return done(null, false, { message: 'User not found' })
+    AuthRoutes.authpal = new Authpal({
+      jwtSecret: environment.jwtSecret,
+      usernameField: 'email',
 
-            if (!(await user.verifyPassword(password)))
-              return done(null, false, { message: 'Wrong password' })
+      findUserByUsernameCallback: async (email) => {
+        let user = await Users.findOne({ email })
+        return user ? { userid: user.id } : null
+      },
 
-            return done(null, user, { message: 'Logged in Successfully' })
-          } catch (e) {
-            done(e)
-          }
+      findUserByIDCallback: async (userid) => {
+        let user = await Users.findOne({ id: Mongo.ObjectId(`${userid}`) })
+        return user ? { userid: user.id } : null
+      },
+      findUserByRefreshToken: async (token) => {
+        let session = await Sessions.findOne({
+          token,
+        })
+        if (session.expiration.getTime() <= Date.now()) {
+          await session.delete()
+          return null
         }
-      )
-    )
-
-    passport.use(
-      new JWTStrategy(
-        {
-          jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-          secretOrKey: environment.jwtSecret,
-        },
-        (jwt_payload, done) => {
-          Users.findOne({ id: jwt_payload.sub }, (err, user) => {
-            if (err) return done(err, false)
-            if (user) return done(null, user)
-            return done(null, false)
+        return session
+          ? {
+              userid: session.user.toString(),
+            }
+          : null
+      },
+      tokenRefreshedCallback: async (jwtPayload, token) => {
+        let exists = await Sessions.findOne({
+          user: Mongo.ObjectId(`${jwtPayload.userid}`),
+          token: token.token,
+        })
+        if (exists) {
+          exists.expiration = token.expiration
+          await exists.save()
+        } else {
+          await Sessions.create({
+            user: jwtPayload.userid,
+            token: token.token,
+            expiration: token.expiration,
           })
         }
-      )
-    )
+      },
+      verifyPasswordCallback: async (email, password) => {
+        let user = await Users.findOne({ email })
+        return user?.verifyPassword(password)
+      },
+    })
+
+    AuthRoutes.authGuard = AuthRoutes.authpal.authorizationMiddleware
 
     super(prefix, app)
   }
@@ -87,53 +101,18 @@ export class AuthRoutes extends Routes {
       }
     )
 
-    router.post('/login', async (req, res, next) => {
-      passport.authenticate('login', async (err, user, info) => {
-        if (err) return next(err)
+    router.post('/login', AuthRoutes.authpal.loginMiddleWare)
 
-        if (!user) return sendDefaultMessage(res, new UNAUTHORIZED())
-        if (err || !user) return next(new Error('An error occurred'))
+    router.get('/resume', AuthRoutes.authpal.resumeMiddleware)
 
-        req.login(user, { session: false }, async (error) => {
-          if (error) return next(error)
-
-          let body = { _id: user._id }
-          let token = JWT.sign({ user: body }, environment.jwtSecret)
-          res.json(Object.assign(user.clean(), { token }))
-        })
-      })(req, res, next)
-    })
-
-    router.post('/resume', requestBodyGuard(['token']), async (req, res) => {
-      try {
-        let payload: any = await JWT.decode(req.body.token)
-        let user = await Users.findById(payload.user._id)
-        if (user) return res.send(user.clean())
-        sendDefaultMessage(
-          res,
-          new UNAUTHORIZED('The authentication token could not be verified...')
-        )
-      } catch (e) {
-        sendDefaultMessage(
-          res,
-          new UNAUTHORIZED('The authentication token could not be verified...')
-        )
+    router.get(
+      '/me',
+      AuthRoutes.authpal.authorizationMiddleware,
+      async (req, res) => {
+        //@ts-ignore
+        let user = (await Users.findOne({ _id: req.user.userid })).clean()
+        res.json(user)
       }
-    })
-
-    router.get('/secure', AuthRoutes.authGuard, (req, res, next) => {
-      res.json({
-        message: 'You made it to the secure route',
-        user: req.user,
-      })
-    })
-  }
-
-  static authGuard = (req, res, next) => {
-    passport.authenticate('jwt', { session: false }, (err, user, info) => {
-      req.user = user
-      if (user) next()
-      else sendDefaultMessage(res, new UNAUTHORIZED(capitalize(info.message)))
-    })(req, res, next)
+    )
   }
 }

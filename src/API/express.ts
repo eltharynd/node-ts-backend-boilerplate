@@ -3,6 +3,7 @@ import * as express from 'express'
 import { createServer, Server } from 'http'
 import * as cors from 'cors'
 import * as bodyParser from 'body-parser'
+import * as cookieParser from 'cookie-parser'
 
 import { INTERNAL_SERVER_ERROR, sendDefaultMessage } from '../messages/defaults'
 
@@ -15,14 +16,22 @@ export class Express {
 
   constructor() {
     this.app = express()
+    let origins = ['http://localhost:3000', 'http://localhost:4200']
+    if (environment.production) {
+      origins = [`https://${environment.domain}`]
+    } else {
+      origins.push(`https://${environment.domain}`)
+    }
     this.app.use(
       cors({
-        origin: environment.production ? `https://${environment.domain}/` : '*',
+        origin: origins,
         optionsSuccessStatus: 200,
+        credentials: true,
       })
     )
     this.app.set('trust proxy', true)
     this.app.use(bodyParser.json())
+    this.app.use(cookieParser())
 
     this.app.use((err, req, res, next) => {
       if (res.headersSent) return next(err)

@@ -1,6 +1,5 @@
 import { Schema, model, Types } from 'mongoose'
 import * as bcrypt from 'bcrypt'
-import { Organizations } from './organizations.model'
 
 export interface IUser {
   _id: Types.ObjectId
@@ -28,8 +27,6 @@ export interface IUser {
 }
 export interface ICleanedUser {
   email: string
-  firstName: string
-  lastName: string
   created: Date
 }
 const usersSchema: Schema = new Schema({
@@ -42,9 +39,6 @@ const usersSchema: Schema = new Schema({
     type: String,
     required: true,
   },
-
-  firstName: String,
-  lastName: String,
 
   created: {
     type: Date,
@@ -88,19 +82,11 @@ usersSchema.pre('remove', function (done) {
 
 const safeDelete = async function (): Promise<Types.ObjectId> {
   return new Promise(async (resolve, reject) => {
-    let owned = await Organizations.find({ owner: this.id })
-
-    if (owned?.length > 0)
-      return reject(
-        `User owns ${owned.length} organization${
-          owned.length > 1 ? 's' : ''
-        }. It can't be deleted at this time...`
-      )
-
-    let member = await Organizations.find({ member: this.id })
-    for (let m of member) {
-      m.members.splice(m.members.indexOf(this.id), 1)
-      await m.save()
+    //do your checks here
+    let forbidden = true
+    if (forbidden) return reject(`Can't delete user`)
+    else {
+      //update all relevant models
     }
 
     this.overridePermissions = true
