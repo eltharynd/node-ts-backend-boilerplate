@@ -64,6 +64,13 @@ export class AuthRoutes extends Routes {
           })
         }
       },
+      tokenDeletedCallback: async (jwtPayload, token) => {
+        let exists = await Sessions.findOne({
+          user: Mongo.ObjectId(`${jwtPayload.userid}`),
+          token: token.token,
+        })
+        if (exists) await exists.delete()
+      },
       verifyPasswordCallback: async (email, password) => {
         let user = await Users.findOne({ email })
         return user?.verifyPassword(password)
@@ -104,6 +111,8 @@ export class AuthRoutes extends Routes {
     router.post('/login', AuthRoutes.authpal.loginMiddleWare)
 
     router.get('/resume', AuthRoutes.authpal.resumeMiddleware)
+
+    router.get('/logout', AuthRoutes.authpal.logoutMiddleware)
 
     router.get(
       '/me',
