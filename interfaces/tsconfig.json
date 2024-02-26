@@ -1,0 +1,14 @@
+{
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"],
+  "compilerOptions": {
+    "declaration": true,
+    "module": "commonjs",
+    "outDir": "dist",
+    "resolveJsonModule": true,
+    "rootDir": "src",
+    "target": "es2015",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
+  }
+}

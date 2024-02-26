@@ -1,16 +1,22 @@
 {
-  "include": ["src/**/*.ts", "src/**/*.json", "src/test/db/models"],
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"],
   "compileOnSave": false,
   "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "module": "CommonJS",
     "moduleResolution": "node",
-    "noImplicitAny": false,
-    "noStrictGenericChecks": true,
-    "outDir": "dist/",
     "resolveJsonModule": true,
+    "noImplicitAny": false,
+    "outDir": "dist/",
     "rootDir": "src",
+    "skipLibCheck": true,
     "sourceMap": true,
     "strictNullChecks": false,
     "strictPropertyInitialization": false,
-    "target": "es5"
+    "target": "ES6",
+    "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   }
 }

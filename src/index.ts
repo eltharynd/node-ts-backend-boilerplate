@@ -1,12 +1,16 @@
-import { Mongo } from './db/mongo'
-import * as fs from 'fs'
-import { Express } from './API/express'
-import { Socket } from './API/socket'
+import fs from 'fs'
+import 'reflect-metadata'
+import { install } from 'source-map-support'
+import { app, start } from './api/express'
+import { startSocket } from './api/socket'
 import environment from './environment'
+import { Mongo } from './mongo'
+import Logger from './util/logger'
+install()
 
 let startApp = async () => {
-  if (!fs.existsSync('.env')) {
-    console.error(
+  if (!fs.existsSync('.env') && !process.env.OPEN_AI_API_KEY) {
+    Logger.error(
       `Couldn't load environment configuration. Make sure you created the appropriate .env file...`
     )
     return process.exit(-1)
@@ -16,39 +20,41 @@ let startApp = async () => {
 
   let gracefulClose = async () => {
     try {
-      console.info('GRACEFULLY QUITTING APPLICATION...')
+      Logger.info('GRACEFULLY QUITTING APPLICATION...')
 
       //SAFE CLOSE
       if (mongo) await mongo.disconnect()
 
-      console.info('GRACEFULLY CLOSED APPLICATION...')
+      Logger.info('GRACEFULLY CLOSED APPLICATION...')
       process.exit(0)
     } catch (error) {
-      console.error('COULD NOT GRACEFULLY CLOSE APPLICATION...')
-      console.error(error)
+      Logger.error('COULD NOT GRACEFULLY CLOSE APPLICATION...')
+      Logger.error(error)
     }
   }
   process.on('SIGINT', gracefulClose)
   process.on('SIGTERM', gracefulClose)
 
   try {
-    console.info('STARTING APPLICATION...')
+    Logger.info('STARTING APPLICATION...')
 
-    console.info('CONNECTING TO DATABASE...')
+    Logger.info('CONNECTING TO DATABASE...')
     mongo = new Mongo()
-    await mongo.connect(environment.test)
+    await mongo.connect()
 
-    console.info('STARTING EXPRESS SERVER...')
-    let express: Express = new Express()
-    await express.start()
+    Logger.info('INITIALIZING EXPRESS SERVER...')
+    let express = app
 
-    console.info('STARTING WEBSOCKET SERVER...')
-    let socket: Socket = new Socket(express.server)
-    await socket.bindEvents()
+    Logger.info('INITIALIZING WEBSOCKET SERVER...')
+    await startSocket()
 
-    console.info('APPLICATION STARTED SUCCESSFULLY...')
-  } catch {
-    console.error('APPLICATION COULD NOT BE STARTED...')
+    Logger.info(`ATTEMPTING TO LISTEN ON PORT ${environment.PORT}...`)
+    await start()
+
+    Logger.info('APPLICATION STARTED SUCCESSFULLY...')
+  } catch (e) {
+    Logger.error('APPLICATION COULD NOT BE STARTED...')
+    Logger.error(e)
     gracefulClose()
   }
 }

@@ -1,14 +1,22 @@
-# a Node.js backend boilerplate with express, socket.io, mongodb and stripe
+# Private GPT Backend
 
-# Contributing
+This repo contains the backend for the private gpt project.
+It is currently intended for development/staging only.
 
-## Setting up the development environment
+## K-Lab gitlab registry authorization for npm
 
-- Clone the repo with
+You will need to authorize npm to access the company's gitlab.
+You can do that by following these steps:
+
+- Create an access token from the [GitLab menu](https://gitlab.com/-/profile/personal_access_tokens) and generate a new one with all permissions
+- Copy the following lines into your `.npmrc` config file making sure to paste your newly created token in there
 
   ```bash
-  git clone https://github.com/eltharynd/node-ts-backend-boilerplate
+  @klab:registry=https://gitlab.com/api/v4/projects/55236957/packages/npm/
+  //gitlab.com/api/v4/projects/55236957/packages/npm/:_authToken=${GITLAB_TOKEN}
   ```
+
+## Setting up the development environment
 
 - Install npm modules with
 
@@ -16,7 +24,7 @@
   npm install
   ```
 
-- Create an empty '.env' file in the root foder and paste the development environment variables following the `sample.env` file.
+- Create an empty '.env' file in the root foder and paste the development environment variables found [here](https://knowledge-lab.atlassian.net/wiki/spaces/AI/pages/563216403/Private+GPT+Backend+.env).
 
 ## Starting the project with autoreload for development
 
@@ -32,56 +40,21 @@
   nodemon dist/index.js
   ```
 
-## You can test your code with
+## Testing your code
 
 ```bash
   npm test
 ```
 
-# Deploying
+# Test User for Development or Staging environment
 
-## Setting up the environment
+```json
+{
+  "email": "test@k-lab.ch",
+  "password": "averysecurepassword"
+}
+```
 
-- Follow the steps for setting up the development environment.
+# Using the API
 
-  ```bash
-  git clone https://github.com/eltharynd/node-ts-backend-boilerplate
-
-  npm install
-
-  #create your .env file in the root directory
-  ```
-
-## Deploying manually
-
-- Make sure to build your project with
-
-  ```bash
-  npm run build
-  ```
-
-- The project starts with
-
-  ```bash
-  npm run start
-  ```
-
-This can be used to run in any type of container or machine, usually in conjunction with [pm2](https://pm2.keymetrics.io/).
-
-# Using for frontend testing
-
-- Build the project with
-
-  ```bash
-  npm run build
-  ```
-
-- Start the project with
-
-  ```bash
-  npm run run:test
-  ```
-
-This will run the server with a **temporary** in-memory database filled with mock data.
-
-From your front-end application you can then connect to [http://localhost:3000](http://localhost:3000)
+Documentation on the various endpoints can be found [here](https://knowledge-lab.atlassian.net/wiki/spaces/AI/pages/588546084/API).

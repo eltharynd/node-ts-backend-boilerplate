@@ -5,6 +5,8 @@
 /dist
 /tmp
 /out-tsc
+/coverage
+swagger_output.json
 
 # dependencies
 /node_modules
@@ -23,3 +25,13 @@ chrome-profiler-events*.json
 # System Files
 .DS_Store
 Thumbs.db
+
+
+package-lock.json
+
+#vector store
+/data
+
+#interfaces
+#This should later be published to npm so it can be reused by frontend
+#/interfaces
