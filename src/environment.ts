@@ -16,7 +16,4 @@ export default {
   MONGO_PASSWORD: process.env.MONGO_PASSWORD || 'averysecurepassword',
 
   JWT_SECRET: process.env.JWT_SECRET || 'asamplejwtsecret',
-  OPEN_AI_API_KEY: process.env.OPEN_AI_API_KEY || 'my_key',
-
-  MONGO_CONNECTION_STRING: process.env.MONGO_CONNECTION_STRING || 'inmemory',
 }

@@ -16,11 +16,17 @@ import { UploadsController } from './uploads/uploads.controller'
 import { UsersController } from './users/users.controller'
 
 export const origins = environment.PRODUCTION
-  ? [`https://${environment.DOMAIN}`]
+  ? [
+      `https://${environment.DOMAIN}`,
+      `https://${environment.DOMAIN.replace('-backend.apps', '.apps')}`,
+    ]
   : [
       'http://localhost:3000',
-      'https://private-gpt.apps.openshift-dev.k-lab.ch',
       `https://${environment.DOMAIN}`,
+      `https://${environment.DOMAIN.replace(
+        '-backend-staging.apps',
+        '-staging.apps'
+      )}`,
     ]
 
 export const app: express.Express = createExpressServer({

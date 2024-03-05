@@ -1,7 +1,8 @@
-import socketIO, { Server, Socket } from 'socket.io'
+import { Server, Socket } from 'socket.io'
 import Logger from '../util/logger'
 import { authpal } from './auth/auth.controller'
 import { origins, server } from './express'
+import { UserModel, Users } from './users/users.model'
 
 class Context {
   io: any
@@ -9,9 +10,8 @@ class Context {
 const context: Context = new Context()
 export default context
 
-export const connections = []
 export const startSocket = async () => {
-  context.io = new socketIO.Server(server, {
+  context.io = new Server(server, {
     path: '/api/socket.io',
     transports: ['websocket', 'polling'],
     cors: {
@@ -24,36 +24,44 @@ export const startSocket = async () => {
   setupListeners()
 }
 
+//TODO make client reconnect when server restarts
 const setupListeners = () => {
-  context.io.on('connect', async (socket: socketIO.Socket) => {
-    connections.push(socket)
-    Logger.debug(`Client connected with id ${socket.id}...`)
+  context.io.on('connect', async (socket: AuthenticatedSocket) => {
+    Logger.debug(`Socket ${socket.id} connected...`)
 
-    putInUserRoom(socket)
+    await authenticate(socket)
 
     //TODO still need?
-    if (socket.use)
+    /*     if (socket.use)
       socket.use(async (event, next) => {
-        putInUserRoom(socket)
+        authenticate(socket)
         next()
-      })
+      }) */
 
     TestHooks(context.io, socket)
 
     socket.on('disconnect', () => {
-      if (socketIO) connections.splice(connections.indexOf(socket), 1)
-      Logger.debug(`Client with id ${socket.id} disconnected...`)
+      Logger.debug(`Socket ${socket.id} disconnected...`)
     })
   })
 }
 
-const putInUserRoom = async (socket: socketIO.Socket) => {
+const authenticate = async (socket: AuthenticatedSocket) => {
   if (socket.handshake?.auth?.token) {
     let jwtPayload = await authpal.verifyAuthToken(
       socket.handshake?.auth?.token
     )
-    if (jwtPayload?.userid) socket.join(`${jwtPayload.userid}`)
-    else {
+    if (jwtPayload?.userid) {
+      if (!socket.rooms.has(jwtPayload.userid)) {
+        Logger.debug(`Socket ${socket.id} joining '${jwtPayload.userid}'...`)
+        socket.join(`${jwtPayload.userid}`)
+      }
+      if (!socket.auth || socket.auth?._id.toString() !== jwtPayload.userid) {
+        let user = await Users.findById(jwtPayload.userid)
+        if (user) socket.auth = user
+      }
+    } else {
+      Logger.debug(`Socket ${socket.id} unauthenticated...`)
       let rooms = Array.from(socket.rooms).filter((room) =>
         /^[a-f\d]{24}$/i.test(room)
       )
@@ -64,6 +72,20 @@ const putInUserRoom = async (socket: socketIO.Socket) => {
   }
 }
 
+export class AuthenticatedSocket extends Socket {
+  auth?: UserModel
+}
+
+export const guardRoute = async (
+  socket: AuthenticatedSocket
+): Promise<void> => {
+  if (!socket.auth) {
+    Logger.debug(`Socket ${socket.id} rejected because is not authorized`)
+    socket.emit('error', 'Unauthorized')
+    throw new Error(`FORBIDDEN`)
+  }
+}
+
 const globalAsyncErrorCatcher =
   ({ handleError = Promise.reject.bind(Promise) } = {}) =>
   (socket, next) => {
@@ -71,6 +93,7 @@ const globalAsyncErrorCatcher =
     socket.on = (event, handler, ...args) => {
       const newHandler = (...handlerArgs) => {
         const result = handler(...handlerArgs)?.catch?.((err) => {
+          Logger.error(err)
           socket.emit('error', err)
         })
 
@@ -88,7 +111,8 @@ const globalAsyncErrorCatcher =
     next()
   }
 
-const TestHooks = (io: Server, socket: Socket) => {
+//TODO remove?
+const TestHooks = (io: Server, socket: AuthenticatedSocket) => {
   socket.on('test', (data) => {
     socket.emit('test', { message: 'A message to the asking socket...' })
 

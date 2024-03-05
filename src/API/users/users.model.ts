@@ -5,7 +5,7 @@ import {
   DisplayThemes,
   Settings,
   User,
-} from '../../../interfaces/dist/index'
+} from 'node-ts-backend-boilerplate-interfaces'
 import { Sessions } from '../sessions/sessions.model'
 
 const settingsSchema: Schema<Settings> = new Schema(
@@ -14,7 +14,7 @@ const settingsSchema: Schema<Settings> = new Schema(
       type: String,
       enum: DisplayThemes,
       required: true,
-      default: DisplayThemes.light,
+      default: DisplayThemes.system,
     },
     selectedLanguage: {
       type: String,
@@ -99,7 +99,9 @@ schema.pre('findOneAndDelete', safeDelete)
 schema.pre('deleteMany', safeDelete)
 schema.pre('deleteOne', safeDelete)
 
-export interface UserModel extends User, Document {
+export interface UserModel extends Omit<User, '_id'>, Document {
+  settings: SettingsModel
+
   public: () => Partial<UserModel>
   verifyPassword: (password: string) => boolean
 }

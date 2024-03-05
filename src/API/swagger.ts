@@ -7,6 +7,7 @@ import {
 import { routingControllersToSpec } from 'routing-controllers-openapi'
 import environment from '../environment'
 import { AuthController } from './auth/auth.controller'
+
 import { UploadsController } from './uploads/uploads.controller'
 import { UsersController } from './users/users.controller'
 
@@ -20,6 +21,7 @@ const schemas = validationMetadatasToSchemas({
 })
 const storage = getMetadataArgsStorage()
 export const SWAGGER_SPECS = routingControllersToSpec(
+  //@ts-ignore
   storage,
   routingControllersOptions,
   {

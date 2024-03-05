@@ -9,6 +9,7 @@
     "rootDir": "src",
     "target": "es2015",
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "esModuleInterop": true
   }
 }

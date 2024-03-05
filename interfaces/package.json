@@ -1,7 +1,10 @@
 {
-  "name": "interfaces",
-  "description": "Interfaces for the Private GPT project",
-  "version": "1.0.7",
+  "name": "node-ts-backend-boilerplate-interfaces",
+  "description": "Interfaces for node-ts-backend-boilerplate",
+  "version": "1.0.0",
+  "publishConfig": {
+    "@klab:registry": "https://gitlab.com/api/v4/projects/55236957/packages/npm/"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -9,6 +12,11 @@
     "deploy": "npm version patch && npm publish --tag latest",
     "deploy:minor": "npm version minor && npm publish --tag latest",
     "deploy:major": "npm version major && npm publish --tag latest"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./requests": "./dist/requests.js",
+    "./responses": "./dist/responses.js"
   },
   "files": [
     "**/*.js",

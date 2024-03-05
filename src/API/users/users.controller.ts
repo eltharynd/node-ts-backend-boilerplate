@@ -1,5 +1,15 @@
 import { Request } from 'express'
 import {
+  SettingsPatchRequest,
+  UserPatchRequest,
+  UserPostRequest,
+} from 'node-ts-backend-boilerplate-interfaces/requests'
+import {
+  PublicUserResponse,
+  SettingsResponse,
+  UserWithIdResponse,
+} from 'node-ts-backend-boilerplate-interfaces/responses'
+import {
   Body,
   Delete,
   Get,
@@ -11,14 +21,11 @@ import {
   Req,
   UseBefore,
 } from 'routing-controllers'
-import {
-  SettingsPatchRequest,
-  UserPatchRequest,
-  UserPostRequest,
-} from '../../../interfaces/dist/index'
+import { ResponseSchema } from 'routing-controllers-openapi'
 import {
   BAD_REQUEST,
   CONFLICT,
+  FORBIDDEN,
   NOT_FOUND,
   UNPROCESSABLE_CONTENT,
 } from '../interceptors/default.interceptor'
@@ -29,6 +36,9 @@ import { Users } from './users.model'
 export class UsersController {
   @Get(`/`)
   @UseBefore(AdminGuard)
+  @ResponseSchema(UserWithIdResponse, {
+    isArray: true,
+  })
   async getAllUsers() {
     return (await Users.find()).map((u) => {
       return { _id: u._id, ...u.public() }
@@ -38,7 +48,9 @@ export class UsersController {
   @Post(`/`)
   @HttpCode(201)
   @UseBefore(AdminGuard)
+  @ResponseSchema(UserWithIdResponse)
   async createUser(@Body() body: UserPostRequest) {
+    if (body.email.toLowerCase) body.email = body.email.toLowerCase()
     let user = await Users.create(body).catch((e) => {
       if (e?.code === 11000)
         throw new CONFLICT('User with this email already exists')
@@ -50,6 +62,7 @@ export class UsersController {
 
   @Get(`/:userId`)
   @UseBefore(AdminGuard)
+  @ResponseSchema(UserWithIdResponse)
   async getUser(@Param('userId') userId: string) {
     let user = await Users.findById(userId)
     if (!user) throw new NOT_FOUND()
@@ -61,11 +74,17 @@ export class UsersController {
 
   @Patch(`/:userId`)
   @UseBefore(OwnerOrAdminGuard)
+  @ResponseSchema(PublicUserResponse)
   async updateUser(
     @Req() req: Request,
     @Body() body: UserPatchRequest,
     @Param('userId') userId: string
   ) {
+    if (body.hasOwnProperty('admin') && !req.auth.admin)
+      throw new FORBIDDEN(
+        `You are not permitted to flag/unflag users as admins...`
+      )
+
     let user = await Users.findById(userId)
     await user
       .set(body)
@@ -84,11 +103,15 @@ export class UsersController {
   async deleteUser(@Param('userId') userId: string) {
     let user = await Users.findById(userId)
     if (!user) throw new NOT_FOUND()
+
+    if (user.admin) throw new FORBIDDEN(`You cannot delete administrators...`)
+
     await user.deleteOne()
   }
 
   @Get(`/:userId/settings`)
   @UseBefore(OwnerOrAdminGuard)
+  @ResponseSchema(SettingsResponse)
   async getUserSettings(@Param('userId') userId: string) {
     let user = await Users.findById(userId)
     return user.settings
@@ -96,6 +119,7 @@ export class UsersController {
 
   @Patch(`/:userId/settings`)
   @UseBefore(OwnerOrAdminGuard)
+  @ResponseSchema(SettingsResponse)
   async updateUserSettings(
     @Body() body: SettingsPatchRequest,
     @Param('userId') userId: string

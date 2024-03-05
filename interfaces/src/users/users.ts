@@ -1,23 +1,23 @@
+import mongoose from 'mongoose'
+
 export enum DisplayThemes {
-  'light' = 'light',
+  'system' = 'system',
   'dark' = 'dark',
+  'light' = 'light',
 }
 
 export enum DisplayLanguages {
   'en' = 'en',
-  'de' = 'de',
   'it' = 'it',
-  'fr' = 'fr',
 }
 
-export interface Settings {
+export class Settings {
   selectedTheme: DisplayThemes
   selectedLanguage: DisplayLanguages
 }
 
-export interface User {
+export class PublicUser {
   email: string
-  password: string
 
   firstName: string
   lastName: string
@@ -26,4 +26,9 @@ export interface User {
 
   settings?: Settings
 }
-export interface PublicUser extends Omit<User, keyof { _id; password }> {}
+
+export class User extends PublicUser {
+  _id?: mongoose.Types.ObjectId | string
+
+  password: string
+}

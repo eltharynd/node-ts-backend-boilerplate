@@ -1,6 +1,10 @@
 import { Authpal } from 'authpal'
 import { NextFunction, Request, Response } from 'express'
 import {
+  AuthLoginRequest,
+  AuthSignupRequest,
+} from 'node-ts-backend-boilerplate-interfaces/requests'
+import {
   Body,
   CookieParam,
   CookieParams,
@@ -11,15 +15,12 @@ import {
   Res,
   UseBefore,
 } from 'routing-controllers'
-import {
-  AuthLoginRequest,
-  AuthSignupRequest,
-} from '../../../interfaces/dist/index'
 import environment from '../../environment'
 import { Mongo } from '../../mongo'
 import {
   CONFLICT,
   INTERNAL_SERVER_ERROR,
+  UNAUTHORIZED,
 } from '../interceptors/default.interceptor'
 import { AuthGuard } from '../middlewares/auth.middleware'
 import { Sessions } from '../sessions/sessions.model'
@@ -99,8 +100,19 @@ export class AuthController {
     next: NextFunction,
     @Body() body: AuthLoginRequest
   ) {
-    return new Promise(async () => {
-      authpal.loginMiddleWare(req, res, next)
+    return new Promise(async (resolve, reject) => {
+      authpal.loginMiddleWare(
+        req,
+        res,
+        next,
+        async function (httpCode: number) {
+          switch (httpCode) {
+            case 401:
+            default:
+              reject(new UNAUTHORIZED())
+          }
+        }
+      )
     })
   }
 
@@ -113,8 +125,19 @@ export class AuthController {
     @CookieParam('refresh_token') refresh_token: string
   ) {
     req.cookies = { refresh_token: cookies }
-    return new Promise(async () => {
-      authpal.resumeMiddleware(req, res, next)
+    return new Promise(async (resolve, reject) => {
+      authpal.resumeMiddleware(
+        req,
+        res,
+        next,
+        async function (httpCode: number) {
+          switch (httpCode) {
+            case 401:
+            default:
+              reject(new UNAUTHORIZED())
+          }
+        }
+      )
     })
   }
 
@@ -122,5 +145,23 @@ export class AuthController {
   @UseBefore(AuthGuard)
   async getMe(@Req() req: Request) {
     return { _id: req.auth._id, ...req.auth.public() }
+  }
+
+  @Get(`/logout`)
+  async logout(@Req() req: Request, @Res() res: Response, next: NextFunction) {
+    return new Promise(async (resolve, reject) => {
+      authpal.logoutMiddleware(
+        req,
+        res,
+        next,
+        async function (httpCode: number) {
+          switch (httpCode) {
+            case 401:
+            default:
+              reject(new UNAUTHORIZED())
+          }
+        }
+      )
+    })
   }
 }

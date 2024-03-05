@@ -1,8 +1,10 @@
 import {
+  IsBoolean,
   IsEmail,
   IsEnum,
   IsNotEmpty,
   IsOptional,
+  IsString,
   Length,
 } from 'class-validator'
 import 'reflect-metadata'
@@ -10,28 +12,32 @@ import 'reflect-metadata'
 import { DisplayLanguages, DisplayThemes, Settings, User } from './users'
 
 export class SettingsPatchRequest implements Partial<Settings> {
-  @IsEnum(DisplayThemes)
   @IsOptional()
+  @IsEnum(DisplayThemes)
   selectedTheme: DisplayThemes
 
-  @IsEnum(DisplayLanguages)
   @IsOptional()
+  @IsEnum(DisplayLanguages)
   selectedlanguage: DisplayLanguages
 }
 
 export class UserPatchRequest implements Partial<User> {
-  @IsEmail()
   @IsOptional()
+  @IsEmail()
   email: string
 
-  @IsNotEmpty()
   @IsOptional()
-  @Length(3)
+  @IsNotEmpty()
+  @IsString()
   firstName: string
 
-  @IsNotEmpty()
   @IsOptional()
+  @IsNotEmpty()
   lastName: string
+
+  @IsOptional()
+  @IsBoolean()
+  admin: boolean
 }
 
 export class UserPostRequest implements Partial<User> {

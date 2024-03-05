@@ -1,20 +1,7 @@
-# Private GPT Backend
+# Node TS Backend BOilerplate
 
-This repo contains the backend for the private gpt project.
+This repo contains a boilerplate backend with Nodejs and Express in Typescript.
 It is currently intended for development/staging only.
-
-## K-Lab gitlab registry authorization for npm
-
-You will need to authorize npm to access the company's gitlab.
-You can do that by following these steps:
-
-- Create an access token from the [GitLab menu](https://gitlab.com/-/profile/personal_access_tokens) and generate a new one with all permissions
-- Copy the following lines into your `.npmrc` config file making sure to paste your newly created token in there
-
-  ```bash
-  @klab:registry=https://gitlab.com/api/v4/projects/55236957/packages/npm/
-  //gitlab.com/api/v4/projects/55236957/packages/npm/:_authToken=${GITLAB_TOKEN}
-  ```
 
 ## Setting up the development environment
 
@@ -24,7 +11,7 @@ You can do that by following these steps:
   npm install
   ```
 
-- Create an empty '.env' file in the root foder and paste the development environment variables found [here](https://knowledge-lab.atlassian.net/wiki/spaces/AI/pages/563216403/Private+GPT+Backend+.env).
+- Create an empty `.env` file in the root foder using `sample.env` as an example.
 
 ## Starting the project with autoreload for development
 
@@ -45,16 +32,3 @@ You can do that by following these steps:
 ```bash
   npm test
 ```
-
-# Test User for Development or Staging environment
-
-```json
-{
-  "email": "test@k-lab.ch",
-  "password": "averysecurepassword"
-}
-```
-
-# Using the API
-
-Documentation on the various endpoints can be found [here](https://knowledge-lab.atlassian.net/wiki/spaces/AI/pages/588546084/API).

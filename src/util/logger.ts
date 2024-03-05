@@ -22,10 +22,19 @@ export default class Logger {
     )
   }
   static warn(args: any) {
-    console.log(
-      chalk.yellow(`[${new Date().toLocaleString()}] [WARN] -`),
-      typeof args === 'string' ? chalk.yellowBright(args) : args
-    )
+    if (args?.stack) {
+      let lines: string[] = args.stack.split('\n')
+      console.log(
+        chalk.yellow(`[${new Date().toLocaleString()}] [ERROR] -`),
+        chalk.yellowBright(`${lines.splice(0, 1)[0]}`)
+      )
+      for (let line of lines) console.log(chalk.yellowBright(line))
+    } else {
+      console.log(
+        chalk.yellow(`[${new Date().toLocaleString()}] [WARN] -`),
+        typeof args === 'string' ? chalk.yellowBright(args) : args
+      )
+    }
   }
   static error(args: any) {
     if (args?.stack) {

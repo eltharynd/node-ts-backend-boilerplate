@@ -11,7 +11,7 @@ install()
 let startApp = async () => {
   if (!fs.existsSync('.env') && !process.env.OPEN_AI_API_KEY) {
     Logger.error(
-      `Couldn't load environment configuration. Make sure you created the appropriate .env file...`
+      `Couldn't load environment configuration... Make sure you created the appropriate .env file...`
     )
     return process.exit(-1)
   }

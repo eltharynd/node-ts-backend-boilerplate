@@ -1,5 +1,6 @@
 # environment
 .env
+.npmrc
 
 # compile output
 /dist
@@ -27,11 +28,8 @@ chrome-profiler-events*.json
 Thumbs.db
 
 
-package-lock.json
+#package-lock.json
 
 #vector store
 /data
 
-#interfaces
-#This should later be published to npm so it can be reused by frontend
-#/interfaces

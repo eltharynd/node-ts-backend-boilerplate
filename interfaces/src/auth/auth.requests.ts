@@ -1,27 +1,33 @@
-import { IsEmail, IsNotEmpty, IsOptional, Length } from 'class-validator'
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator'
 import 'reflect-metadata'
 import { User } from '../users/users'
 
 export class AuthSignupRequest implements Partial<User> {
   @IsEmail()
+  @IsNotEmpty()
   email: string
 
-  @Length(10)
+  @IsString()
+  @IsNotEmpty()
   password: string
 
-  @IsNotEmpty()
   @IsOptional()
+  @IsNotEmpty()
+  @IsString()
   firstName: string
 
-  @IsNotEmpty()
   @IsOptional()
+  @IsNotEmpty()
+  @IsString()
   lastName: string
 }
 
 export class AuthLoginRequest implements Partial<User> {
   @IsEmail()
+  @IsNotEmpty()
   email: string
 
-  @Length(9)
+  @IsString()
+  @IsNotEmpty()
   password: string
 }
